@@ -16,11 +16,66 @@ import os
 import sys
 
 
+def falcon_swagger(body, headers):
+    from falconswagger.swagger_api import SwaggerAPI
+    from falconswagger.models.http import ModelHttpMeta
+
+    class HelloModelMeta(ModelHttpMeta):
+        __schema__ = {
+          '/hello/{account_id}/test': {
+             'get': {
+                'parameters': [{
+                    'name': 'account_id',
+                    'in': 'path',
+                    'required': True,
+                    'type': 'string'
+                }],
+                'operationId': 'get_hello',
+                'responses': {'200': {'description': 'Got hello'}}
+            }
+          }
+       }
+
+        def get_hello(cls, req, resp):
+            user_agent = req.user_agent  # NOQA
+            limit = req.get_param('limit') or '10'  # NOQA
+            resp.data = body
+            resp.set_headers(headers)
+
+    class HelloModel(metaclass=HelloModelMeta):
+       pass
+
+    return SwaggerAPI([HelloModel], title='Hello API')
+
+
 def falcon(body, headers):
     import falcon
 
     path = '/hello/{account_id}/test'
     falcon_app = falcon.API('text/plain')
+
+    # def ask(req, resp, params):
+    #     params['answer'] = 42
+
+    # @falcon.before(ask)
+    class HelloResource:
+        def on_get(self, req, resp, account_id):
+            user_agent = req.user_agent  # NOQA
+            limit = req.get_param('limit') or '10'  # NOQA
+            resp.data = body
+            resp.set_headers(headers)
+
+    falcon_app.add_route(path, HelloResource())
+
+    return falcon_app
+
+
+def falcon_defaultdict_router(body, headers):
+    import falcon
+    from falconswagger.router import DefaultDictRouter
+
+    path = '/hello/{account_id}/test'
+    falcon_app = falcon.API('text/plain', router=DefaultDictRouter())
 
     # def ask(req, resp, params):
     #     params['answer'] = 42

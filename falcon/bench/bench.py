@@ -255,7 +255,9 @@ def main():
     frameworks = [
         'bottle',
         'falcon',
+        'falcon-swagger',
         'falcon-ext',
+        'falcon-defaultdict-router',
         'flask',
         'pecan',
         'werkzeug'
